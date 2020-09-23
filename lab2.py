@@ -72,8 +72,41 @@ def k_means_clustering(data,k):
 
 
     """ YOUR CODE STARTS HERE """
+    num = data.shape[0]
+    dim = data.shape[1]
+    
+    import math
+    randomRow = np.random.randint(num,size=k)
+    centers = data[randomRow,:]
+    
+    labels = np.zeros(num)
 
-
+    change = 1
+    
+    while change > 0.000001:
+        change = 0
+        for i in range(num):
+            dist = []
+            for j in range(k):
+                dist.append(math.sqrt(sum(pow(centers[j, :] - data[i, :], 2))))
+            minCluserId = np.argmin(dist)
+            labels[i] = minCluserId
+        
+        tempCenters = np.zeros((k, dim))
+        tempNums = 0
+        for j in range(k):
+            for i in range(num):
+                if j == labels[i]:
+                    tempCenters[j][0] += data[i][0]
+                    tempCenters[j][1] += data[i][1]
+                    tempNums += 1
+            tempCenters[j][0] = tempCenters[j][0]/tempNums
+            tempCenters[j][1] = tempCenters[j][1]/tempNums
+            tempChange = np.linalg.norm(tempCenters[j]-centers[j])
+            if tempChange > change:
+                change = tempChange
+            centers[j][0] = tempCenters[j][0]
+            centers[j][1] = tempCenters[j][1]
 
     """ YOUR CODE ENDS HERE """
 
