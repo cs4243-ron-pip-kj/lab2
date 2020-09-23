@@ -26,6 +26,7 @@ def smoothing(img):
     """
 
     """ YOUR CODE STARTS HERE """
+    img_smoothed = cv2.GaussianBlur(img,(5,5),5.0)
 
     """ YOUR CODE ENDS HERE """
 
@@ -44,6 +45,7 @@ def RGBtoLab(img):
     """
 
     """ YOUR CODE STARTS HERE """
+    lab = color.rgb2lab(img)
 
     """ YOUR CODE ENDS HERE """
    
