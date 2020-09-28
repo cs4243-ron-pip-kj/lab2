@@ -132,10 +132,22 @@ def get_bin_seeds(data, bin_size, min_bin_freq=1):
     """
 
     """ YOUR CODE STARTS HERE """
+    compress_coordinate = np.vectorize(lambda x: np.round(x/bin_size))
+    compressed = compress_coordinate(data)
     
+    group = np.unique(compressed, axis = 0, return_counts = True)
+    old_bin_seeds = group[0]
+    old_freqs = group[1]
     
-
-
+    new_bin_seeds = []
+    new_freqs = []
+    for i in range(len(old_freqs)):
+        if old_freqs[i] >= min_bin_freq:
+            new_bin_seeds.append(old_bin_seeds[i])
+            new_freqs.append(old_freqs[i])
+            
+    bin_seeds = [u_m * bin_size for u_m in new_bin_seeds]
+    
     """ YOUR CODE ENDS HERE """
     return bin_seeds
 
@@ -159,6 +171,35 @@ def mean_shift_single_seed(start_seed, data, nbrs, max_iter):
     stop_thresh = 1e-3 * bandwidth  # when mean has converged
 
     """ YOUR CODE STARTS HERE """
+    iter_no = 0
+    shift = 0
+    start_mean = start_seed
+    
+    while iter_no < max_iter and shift < stop_thresh:
+        iter_no += 1
+
+        # Find the nearest points
+        nbrs.fit(data)
+        points_nearest_to_seed = nbrs.radius_neighbors(start_mean.reshape(1, -1))[1][0]
+
+        new_mean = np.zeros((1, 2))
+        no_of_points = 0
+
+        # Find out the new mean from the current neighbours
+        for index in points_nearest_to_seed:
+            curr_point = data[index]
+            new_mean[0][0] += curr_point[0]
+            new_mean[0][1] += curr_point[1]
+            no_of_points += 1
+        new_mean[0][0] /= no_of_points
+        new_mean[0][1] /= no_of_points
+        
+        # Check if converges using Euclidean distance
+        shift = np.linalg.norm(start_mean-new_mean)
+        start_mean = new_mean
+        
+    peak = tuple(start_mean[0])
+    n_points = no_of_points
     
     """ YOUR CODE ENDS HERE """
 
@@ -211,9 +252,44 @@ def mean_shift_clustering(data, bandwidth=0.7, min_bin_freq=5, max_iter=300):
 
 
     """ YOUR CODE STARTS HERE """
+    list_of_peaks = list(center_intensity_dict.keys())   
+    new_nbrs = NearestNeighbors(radius=bandwidth, n_jobs=1).fit(list_of_peaks)
 
+    # Find groups of near duplicate peaks
+    new_grouping = set()
+    for point in list_of_peaks:
+        near_duplicate_peak = new_nbrs.radius_neighbors(np.asarray(point).reshape(1, -1))[1][0]        
+        new_grouping.add(tuple(near_duplicate_peak.tolist()))
     
+    new_grouping = list(new_grouping)
+    
+        # Clean up new grouping: Necessary for case 3, requires unionfind
+    from unionfind import unionfind
+    u = unionfind(len(list_of_peaks))
+    for group in new_grouping:
+        for x in range(len(group) - 1):
+            u.unite(group[x], group[x+1])
+    new_grouping = u.groups()
 
+    k = len(new_grouping)
+    centers = np.zeros((k, n_features))
+    
+    # Choose the peak with greatest number of points
+    for k in range(k):
+        grouping = new_grouping[k]
+        max_freq = 0
+        max_index = -1
+        for index in grouping:
+            peak = list_of_peaks[index]
+            freq = center_intensity_dict[peak]
+            if freq > max_freq:
+                max_freq = freq
+                max_index = index
+        centers[k] = list_of_peaks[max_index]
+        
+    # Iterate and assign to nearest cluster peak
+    final_nbrs = NearestNeighbors(n_neighbors=1, n_jobs=1).fit(centers)
+    labels = final_nbrs.kneighbors(data)[1]
 
     """ YOUR CODE ENDS HERE """
     end =  time()
