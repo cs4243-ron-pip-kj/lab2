@@ -78,7 +78,7 @@ def k_means_clustering(data,k):
     import math
     centers = data[random.sample(range(num), k)]
     
-    labels = np.zeros(num)
+    labels = np.zeros(num).astype(int)
 
     change = 1
     
