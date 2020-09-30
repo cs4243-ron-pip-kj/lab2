@@ -94,31 +94,35 @@ def k_means_clustering(data,k):
         
         tempCenters = np.zeros((k, dim))
         tempMean = np.zeros((k, dim))
-        tempNums = 0
+        
         
         for j in range(k):
             """ For each centers that we currently have, find the mean of the cluster"""
+            tempNums = 0
             for i in range(num):
                 """ if the data belongs to this center j, then we add the features to find the sum"""
                 if j == labels[i]:
-                    tempMean[j] += data[i]
-                    tempNums += 1
-            """ Finding mean of the cluster """
-            print(tempNums)
-            tempMean[j] = tempMean[j]/tempNums
+                    tempMean[j] = tempMean[j] + data[i]
+                    tempNums = tempNums + 1
+
+            if (tempNums == 0): 
+                break
+            else:
+                tempMean[j] = tempMean[j]/tempNums
             
-            
-            curr_min_value = np.full((dim), 9223372036854775807)
+            check = 0
+            curr_min_value = np.full((dim), 1000000)
             """ For each centers that we currently have, find the new center """
             for c in range (num):
                 if j == labels[c]:
+                    if (check == 0):
+                        curr_min_value = np.sum(np.abs(data[c] - tempMean[j]))
+                        check = 1
                     diff = data[c] - tempMean[j]
                     if (np.sum(np.abs(diff)) < np.sum(curr_min_value)):
                         curr_min_value = np.abs(diff)
                         tempCenters[j] = data[c] 
                         
-            tempNums = 0
-            
         change = np.sum(np.absolute(centers - tempCenters))
         centers = tempCenters
 
