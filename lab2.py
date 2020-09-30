@@ -106,7 +106,7 @@ def k_means_clustering(data,k):
                     tempNums = tempNums + 1
 
             if (tempNums == 0): 
-                break
+                continue
             else:
                 tempMean[j] = tempMean[j]/tempNums
             
