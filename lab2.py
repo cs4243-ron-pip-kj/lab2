@@ -88,7 +88,7 @@ def k_means_clustering(data,k):
         for i in range(num):
             dist = []
             for j in range(k):
-                dist.append(math.sqrt(sum(pow(centers[j, :] - data[i, :], 2))))
+                dist.append(np.sum(np.square(centers[j] - data[i])))
             minCluserId = np.argmin(dist)
             labels[i] = minCluserId
         
@@ -312,11 +312,6 @@ def mean_shift_clustering(data, bandwidth=0.7, min_bin_freq=5, max_iter=300):
     # Iterate and assign to nearest cluster peak
     final_nbrs = NearestNeighbors(n_neighbors=1, n_jobs=1).fit(centers)
     labels = final_nbrs.kneighbors(data)[1]
-    
-    labels_new = np.zeros(len(labels)).astype(int)
-    
-    for i in range(len(labels)):
-        labels_new[i] = labels[i]
 
     """ YOUR CODE ENDS HERE """
     end =  time()
