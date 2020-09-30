@@ -76,15 +76,15 @@ def k_means_clustering(data,k):
     dim = data.shape[1]
     
     import math
-    randomRow = np.random.randint(num,size=k)
-    centers = data[randomRow,:]
+    centers = data[random.sample(range(num), k)]
     
     labels = np.zeros(num)
 
     change = 1
     
-    while change > 0.000001:
+    while change > 1e-10:
         change = 0
+        """ Get the labels (centres) for each of the datapoints """
         for i in range(num):
             dist = []
             for j in range(k):
@@ -93,20 +93,34 @@ def k_means_clustering(data,k):
             labels[i] = minCluserId
         
         tempCenters = np.zeros((k, dim))
+        tempMean = np.zeros((k, dim))
         tempNums = 0
+        
         for j in range(k):
+            """ For each centers that we currently have, find the mean of the cluster"""
             for i in range(num):
+                """ if the data belongs to this center j, then we add the features to find the sum"""
                 if j == labels[i]:
-                    tempCenters[j][0] += data[i][0]
-                    tempCenters[j][1] += data[i][1]
+                    tempMean[j] += data[i]
                     tempNums += 1
-            tempCenters[j][0] = tempCenters[j][0]/tempNums
-            tempCenters[j][1] = tempCenters[j][1]/tempNums
-            tempChange = np.linalg.norm(tempCenters[j]-centers[j])
-            if tempChange > change:
-                change = tempChange
-            centers[j][0] = tempCenters[j][0]
-            centers[j][1] = tempCenters[j][1]
+            """ Finding mean of the cluster """
+            print(tempNums)
+            tempMean[j] = tempMean[j]/tempNums
+            
+            
+            curr_min_value = np.full((dim), 9223372036854775807)
+            """ For each centers that we currently have, find the new center """
+            for c in range (num):
+                if j == labels[c]:
+                    diff = data[c] - tempMean[j]
+                    if (np.sum(np.abs(diff)) < np.sum(curr_min_value)):
+                        curr_min_value = np.abs(diff)
+                        tempCenters[j] = data[c] 
+                        
+            tempNums = 0
+            
+        change = np.sum(np.absolute(centers - tempCenters))
+        centers = tempCenters
 
     """ YOUR CODE ENDS HERE """
 
@@ -327,8 +341,18 @@ def k_means_segmentation(img, k):
     """
 
     """ YOUR CODE STARTS HERE """
+    img_dim = img.shape
     
-
+    if len(img_dim) == 2:
+        Height = img_dim[0]
+        Width = img_dim[1]
+        Feature = 1
+    elif len(img_dim) == 3:
+        Height = img_dim[0]
+        Width = img_dim[1]
+        Feature = img_dim[2]
+        
+    labels, centers = k_means_clustering(img.reshape(Height * Width, Feature), k)
     """ YOUR CODE ENDS HERE """
 
     return labels,centers
@@ -350,7 +374,18 @@ def mean_shift_segmentation(img,b):
     """
 
     """ YOUR CODE STARTS HERE """
+    img_dim = img.shape
     
+    if len(img_dim) == 2:
+        Height = img_dim[0]
+        Width = img_dim[1]
+        Feature = 1
+    elif len(img_dim) == 3:
+        Height = img_dim[0]
+        Width = img_dim[1]
+        Feature = img_dim[2]
+    
+    labels, centers = mean_shift_clustering(img.reshape(Height * Width, Feature), b)
     
     """ YOUR CODE ENDS HERE """
 
