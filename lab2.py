@@ -312,6 +312,11 @@ def mean_shift_clustering(data, bandwidth=0.7, min_bin_freq=5, max_iter=300):
     # Iterate and assign to nearest cluster peak
     final_nbrs = NearestNeighbors(n_neighbors=1, n_jobs=1).fit(centers)
     labels = final_nbrs.kneighbors(data)[1]
+    
+    labels_new = np.zeros(len(labels)).astype(int)
+    
+    for i in range(len(labels)):
+        labels_new[i] = labels[i]
 
     """ YOUR CODE ENDS HERE """
     end =  time()
