@@ -190,34 +190,33 @@ def mean_shift_single_seed(start_seed, data, nbrs, max_iter):
 
     """ YOUR CODE STARTS HERE """
     iter_no = 0
-    shift = 0
+    shift = float('inf')
     start_mean = start_seed
     
-    while iter_no < max_iter and shift < stop_thresh:
+    while iter_no < max_iter and shift > stop_thresh:
         iter_no += 1
 
         # Find the nearest points
         nbrs.fit(data)
-        points_nearest_to_seed = nbrs.radius_neighbors(start_mean.reshape(1, -1))[1][0]
+        points_nearest_to_seed = nbrs.radius_neighbors([start_mean], return_distance = False)[0]
 
-        new_mean = np.zeros((1, 2))
+        dim = data[0].shape
+        new_mean = np.zeros((dim))
         no_of_points = 0
 
         # Find out the new mean from the current neighbours
         for index in points_nearest_to_seed:
             curr_point = data[index]
-            new_mean[0][0] += curr_point[0]
-            new_mean[0][1] += curr_point[1]
+            new_mean += curr_point
             no_of_points += 1
-        new_mean[0][0] /= no_of_points
-        new_mean[0][1] /= no_of_points
+        new_mean /= no_of_points
         
         # Check if converges using Euclidean distance
         shift = np.linalg.norm(start_mean-new_mean)
         start_mean = new_mean
         
-    peak = tuple(start_mean[0])
-    n_points = no_of_points
+    n_points = len(points_nearest_to_seed)
+    peak = tuple(start_mean)
     
     """ YOUR CODE ENDS HERE """
 
