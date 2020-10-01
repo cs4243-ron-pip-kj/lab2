@@ -278,20 +278,11 @@ def mean_shift_clustering(data, bandwidth=0.7, min_bin_freq=5, max_iter=300):
     # Find groups of near duplicate peaks
     new_grouping = []
     for point in list_of_peaks:
-        near_duplicate_peak = new_nbrs.radius_neighbors(np.asarray(point).reshape(1, -1))[1][0]
+        near_duplicate_peak = new_nbrs.radius_neighbors([np.asarray(point)], return_distance = False)[0]
         near_duplicate_peak = near_duplicate_peak.tolist()
         if near_duplicate_peak not in new_grouping:
             new_grouping.append(near_duplicate_peak)
-
-    # Clean up new grouping to remove duplicates: Necessary for case 3
-    for i in range(len(new_grouping)):
-        group = new_grouping[i]
-        for ele in group:      
-            for j in range(i+1, len(new_grouping)):
-                if ele in new_grouping[j]:
-                    new_grouping[j].remove(ele)
     
-    new_grouping = [x for x in new_grouping if x]  # Remove empty lists
     k = len(new_grouping)
     centers = np.zeros((k, n_features))
     
