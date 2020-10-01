@@ -76,37 +76,55 @@ def k_means_clustering(data,k):
     dim = data.shape[1]
     
     import math
-    randomRow = np.random.randint(num,size=k)
-    centers = data[randomRow,:]
+    centers = data[random.sample(range(num), k)]
     
-    labels = np.zeros(num)
+    labels = np.zeros(num).astype(int)
 
     change = 1
     
-    while change > 0.000001:
+    while change > 1e-10:
         change = 0
+        """ Get the labels (centres) for each of the datapoints """
         for i in range(num):
             dist = []
             for j in range(k):
-                dist.append(math.sqrt(sum(pow(centers[j, :] - data[i, :], 2))))
+                dist.append(np.sum(np.square(centers[j] - data[i])))
             minCluserId = np.argmin(dist)
             labels[i] = minCluserId
         
         tempCenters = np.zeros((k, dim))
-        tempNums = 0
+        tempMean = np.zeros((k, dim))
+        
+        
         for j in range(k):
+            """ For each centers that we currently have, find the mean of the cluster"""
+            tempNums = 0
             for i in range(num):
+                """ if the data belongs to this center j, then we add the features to find the sum"""
                 if j == labels[i]:
-                    tempCenters[j][0] += data[i][0]
-                    tempCenters[j][1] += data[i][1]
-                    tempNums += 1
-            tempCenters[j][0] = tempCenters[j][0]/tempNums
-            tempCenters[j][1] = tempCenters[j][1]/tempNums
-            tempChange = np.linalg.norm(tempCenters[j]-centers[j])
-            if tempChange > change:
-                change = tempChange
-            centers[j][0] = tempCenters[j][0]
-            centers[j][1] = tempCenters[j][1]
+                    tempMean[j] = tempMean[j] + data[i]
+                    tempNums = tempNums + 1
+
+            if (tempNums == 0): 
+                continue
+            else:
+                tempMean[j] = tempMean[j]/tempNums
+            
+            check = 0
+            curr_min_value = np.full((dim), 1000000)
+            """ For each centers that we currently have, find the new center """
+            for c in range (num):
+                if j == labels[c]:
+                    if (check == 0):
+                        curr_min_value = np.sum(np.abs(data[c] - tempMean[j]))
+                        check = 1
+                    diff = data[c] - tempMean[j]
+                    if (np.sum(np.abs(diff)) < np.sum(curr_min_value)):
+                        curr_min_value = np.abs(diff)
+                        tempCenters[j] = data[c] 
+                        
+        change = np.sum(np.absolute(centers - tempCenters))
+        centers = tempCenters
 
     """ YOUR CODE ENDS HERE """
 
@@ -172,34 +190,33 @@ def mean_shift_single_seed(start_seed, data, nbrs, max_iter):
 
     """ YOUR CODE STARTS HERE """
     iter_no = 0
-    shift = 0
+    shift = float('inf')
     start_mean = start_seed
     
-    while iter_no < max_iter and shift < stop_thresh:
+    while iter_no < max_iter and shift > stop_thresh:
         iter_no += 1
 
         # Find the nearest points
         nbrs.fit(data)
-        points_nearest_to_seed = nbrs.radius_neighbors(start_mean.reshape(1, -1))[1][0]
+        points_nearest_to_seed = nbrs.radius_neighbors([start_mean], return_distance = False)[0]
 
-        new_mean = np.zeros((1, 2))
+        dim = data[0].shape
+        new_mean = np.zeros((dim))
         no_of_points = 0
 
         # Find out the new mean from the current neighbours
         for index in points_nearest_to_seed:
             curr_point = data[index]
-            new_mean[0][0] += curr_point[0]
-            new_mean[0][1] += curr_point[1]
+            new_mean += curr_point
             no_of_points += 1
-        new_mean[0][0] /= no_of_points
-        new_mean[0][1] /= no_of_points
+        new_mean /= no_of_points
         
         # Check if converges using Euclidean distance
         shift = np.linalg.norm(start_mean-new_mean)
         start_mean = new_mean
         
-    peak = tuple(start_mean[0])
-    n_points = no_of_points
+    n_points = len(points_nearest_to_seed)
+    peak = tuple(start_mean)
     
     """ YOUR CODE ENDS HERE """
 
@@ -327,8 +344,18 @@ def k_means_segmentation(img, k):
     """
 
     """ YOUR CODE STARTS HERE """
+    img_dim = img.shape
     
-
+    if len(img_dim) == 2:
+        Height = img_dim[0]
+        Width = img_dim[1]
+        Feature = 1
+    elif len(img_dim) == 3:
+        Height = img_dim[0]
+        Width = img_dim[1]
+        Feature = img_dim[2]
+        
+    labels, centers = k_means_clustering(img.reshape(Height * Width, Feature), k)
     """ YOUR CODE ENDS HERE """
 
     return labels,centers
@@ -350,7 +377,18 @@ def mean_shift_segmentation(img,b):
     """
 
     """ YOUR CODE STARTS HERE """
+    img_dim = img.shape
     
+    if len(img_dim) == 2:
+        Height = img_dim[0]
+        Width = img_dim[1]
+        Feature = 1
+    elif len(img_dim) == 3:
+        Height = img_dim[0]
+        Width = img_dim[1]
+        Feature = img_dim[2]
+    
+    labels, centers = mean_shift_clustering(img.reshape(Height * Width, Feature), b)
     
     """ YOUR CODE ENDS HERE """
 
