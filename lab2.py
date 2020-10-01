@@ -197,7 +197,6 @@ def mean_shift_single_seed(start_seed, data, nbrs, max_iter):
         iter_no += 1
 
         # Find the nearest points
-        nbrs.fit(data)
         points_nearest_to_seed = nbrs.radius_neighbors([start_mean], return_distance = False)[0]
 
         dim = data[0].shape
@@ -206,13 +205,12 @@ def mean_shift_single_seed(start_seed, data, nbrs, max_iter):
 
         # Find out the new mean from the current neighbours
         for index in points_nearest_to_seed:
-            curr_point = data[index]
-            new_mean += curr_point
+            new_mean += data[index]
             no_of_points += 1
         new_mean /= no_of_points
         
         # Check if converges using Euclidean distance
-        shift = np.linalg.norm(start_mean-new_mean)
+        shift = np.sum(np.square(start_mean-new_mean))
         start_mean = new_mean
         
     n_points = len(points_nearest_to_seed)
@@ -282,7 +280,16 @@ def mean_shift_clustering(data, bandwidth=0.7, min_bin_freq=5, max_iter=300):
         near_duplicate_peak = near_duplicate_peak.tolist()
         if near_duplicate_peak not in new_grouping:
             new_grouping.append(near_duplicate_peak)
+
+    # Clean up new grouping to remove duplicates: Necessary for case 3
+    for i in range(len(new_grouping)):
+        group = new_grouping[i]
+        for ele in group:      
+            for j in range(i+1, len(new_grouping)):
+                if ele in new_grouping[j]:
+                    new_grouping[j].remove(ele)
     
+    new_grouping = [x for x in new_grouping if x]  # Remove empty lists
     k = len(new_grouping)
     centers = np.zeros((k, n_features))
     
